@@ -58,8 +58,6 @@ if __name__ == '__main__':
     # (X_train, Y_train) = functions.read_data_with_hog("data/DataSet_Nao_RAW/DataSet_SEQUENCE_1", shape=SHAPE)
     # (X_test, Y_test) = functions.read_data_with_hog("data/DataSet_Nao_RAW/DataSet_SEQUENCE_2", shape=SHAPE)
 
-
-
     imgA = Input(shape=SHAPE)
     imgB = Input(shape=SHAPE)
     featureExtractor = model.build_siamese_model()
@@ -76,35 +74,18 @@ if __name__ == '__main__':
     #model.load_weights(f'hog/hog')
     #model.load_weights(f'result_unique_pairs_deeper/modeltestowy_24/model')
 
-    # pred_labels, probabilities = predict_class(X_test, X_query, Y_query)
-    # mAP = calculate_mAP(Y_test, Y_query, probabilities, pred_labels)
-    # # print("mAP:", mAP)
-    # # print("Accuracy: ", accuracy_score(Y_test, pred_labels))
-    # # print(confusion_matrix(Y_test, pred_labels))
-    from keras import backend as K
-
-    # with a Sequential model
-    # get_3rd_layer_output = K.function([model.layers[0].input],
-    #                                   [model.layers[3].output])
-    # layer_output = get_3rd_layer_output([x])[0]
-
-
     X_train_extracted = featureExtractor.predict(X_train)
     X_test_extracted = featureExtractor.predict(X_test)
-    # print(X_train_extracted.shape)
-    # print(X_test_extracted.shape)
-    # print(Y_train.shape)
-    # print(Y_test.shape)
-    # print(Y_train)
+
     for n in [3, 5, 7, 8, 9, 12, 15]:
         print(f'KNN - {n}')
         knn = KNeighborsClassifier(n_neighbors=n)
         knn.fit(X_train_extracted, Y_train)
         y_pred = knn.predict(X_test_extracted)
         print("Accuracy: ", accuracy_score(Y_test, y_pred))
-        # print("F1: ", f1_score(Y_test, y_pred, average='weighted'))
-        # print("Precision: ", precision_score(Y_test, y_pred, average='weighted'))
-        # print("Recall: ", recall_score(Y_test, y_pred, average='weighted'))
+        print("F1: ", f1_score(Y_test, y_pred, average='weighted'))
+        print("Precision: ", precision_score(Y_test, y_pred, average='weighted'))
+        print("Recall: ", recall_score(Y_test, y_pred, average='weighted'))
         print(confusion_matrix(Y_test, y_pred))
 
     print('SVM')
