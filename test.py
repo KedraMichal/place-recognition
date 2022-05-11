@@ -71,8 +71,8 @@ if __name__ == '__main__':
     distance = Lambda(functions.euclidean_distance)([featsA, featsB])
     outputs = Dense(1, activation="sigmoid")(distance)
     model = Model(inputs=[imgA, imgB], outputs=outputs)
-    model.load_weights(f'similarity/model8/model')
-    #model.load_weights(f'result_unique_pairs/modeltestowy_15/model')
+    #model.load_weights(f'similarity_40_pos_and_neg/model40/model')
+    model.load_weights(f'result_unique_pairs/modeltestowy_28/model')
     #model.load_weights(f'hog/hog')
     #model.load_weights(f'result_unique_pairs_deeper/modeltestowy_24/model')
 

@@ -327,7 +327,7 @@ def sort_index(lst, rev=True):
     return s
 
 
-def find_most_similar_pairs_from_class(images, labels):
+def find_most_similar_pairs_from_class(images, labels, path, top_similar=30):
     unique_labels = np.unique(labels)
     full_index_list = []
     for ind_lab in unique_labels:
@@ -338,11 +338,14 @@ def find_most_similar_pairs_from_class(images, labels):
         full_index_list.append(ind_list)
 
     best_matches_dict = {}
+    best_matches_neg_dict = {}
+    kk = 0
     for image, label in zip(images, labels):
+        print(kk)
+        kk += 1
         positive_images = full_index_list[label]
         sim_list = []
         positive_images_ind_list = []
-        print(positive_images_ind_list)
         for pos_img in positive_images: # example : [1600, 1601, 1602 ... 2004]
             positive_image = images[pos_img]
             if np.array_equal(positive_image, image):
@@ -356,17 +359,39 @@ def find_most_similar_pairs_from_class(images, labels):
         best_matches = []
         for i, ind in enumerate(sorted_best):
             best_matches.append(positive_images_ind_list[ind])
-            if i == 10:
+            if i == top_similar:
                 break
         best_matches_dict[base_img_index] = best_matches
 
-    with open('similarity/saved_best_matches.pkl', 'wb') as f:
+
+        negative_images = full_index_list[:label] + full_index_list[label + 1:]
+        negative_images_flatten = [item for sublist in negative_images for item in sublist]
+        sim_neg_list = []
+        negative_images_ind_list = []
+        for neg_img in negative_images_flatten: # example : [1600, 1601, 1602 ... 2004]
+            negative_image = images[neg_img]
+            sim = rmse(image, negative_image)
+            sim_neg_list.append(sim)
+            negative_images_ind_list.append(neg_img)
+
+        sorted_best_neg = list(reversed(sort_index(sim_neg_list)))
+        best_matches_neg = []
+        for i, ind in enumerate(sorted_best_neg):
+            best_matches_neg.append(negative_images_ind_list[ind])
+            if i == top_similar:
+                break
+        best_matches_neg_dict[base_img_index] = best_matches_neg
+
+    with open(f'{path}/saved_best_matches.pkl', 'wb') as f:
         pickle.dump(best_matches_dict, f)
+
+    with open(f'{path}/saved_best_matches_neg.pkl', 'wb') as f:
+        pickle.dump(best_matches_neg_dict, f)
 
     return None
 
 
-def generate_pairs_based_on_sim(images, labels):
+def generate_pairs_based_on_sim(images, labels, path):
     unique_labels = np.unique(labels)
 
     full_index_list = []
@@ -377,7 +402,7 @@ def generate_pairs_based_on_sim(images, labels):
                 ind_list.append(ind)
         full_index_list.append(ind_list)
 
-    with open('similarity/saved_best_matches.pkl', 'rb') as f:
+    with open(f'{path}/saved_best_matches.pkl', 'rb') as f:
         best_matches_dict = pickle.load(f)
     pair_images, pair_labels = [], []
 
@@ -410,6 +435,74 @@ def generate_pairs_based_on_sim(images, labels):
         base_img_ind += 1
 
     return np.asarray(pair_images), np.asarray(pair_labels)
+
+
+
+def generate_pairs_based_on_sim_pos_and_neg(images, labels, path):
+    unique_labels = np.unique(labels)
+
+    full_index_list = []
+    for ind_lab in unique_labels:
+        ind_list = []
+        for ind, lab in enumerate(labels):
+            if lab == ind_lab:
+                ind_list.append(ind)
+        full_index_list.append(ind_list)
+
+    with open(f'{path}/saved_best_matches.pkl', 'rb') as f:
+        best_matches_dict = pickle.load(f)
+    with open(f'{path}/saved_best_matches_neg.pkl', 'rb') as f:
+        best_matches_neg_dict = pickle.load(f)
+
+    pair_images, pair_labels = [], []
+
+    base_img_ind = 0
+    for image, label in zip(images, labels):
+        #positive_images = full_index_list[label]
+        # print('base')
+        # cv2.imshow('image', image)
+        # cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        random_positive_image_index = np.random.choice(best_matches_dict[base_img_ind])
+        random_positive_image = images[random_positive_image_index]
+
+        old_list = best_matches_dict[base_img_ind]
+        old_list.remove(random_positive_image_index)
+        best_matches_dict[base_img_ind] = old_list
+
+        # print('pos')
+        # cv2.imshow('image', random_positive_image)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+        pair_images.append([image, random_positive_image])
+        pair_labels.append([1])
+
+        #negative_images = full_index_list[:label] + full_index_list[label + 1:]
+        #negative_images_flatten = [item for sublist in negative_images for item in sublist]
+        random_negative_image_index = np.random.choice(best_matches_neg_dict[base_img_ind])
+        random_negative_image = images[random_negative_image_index]
+        # print('neg')
+        # cv2.imshow('image', random_negative_image)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        old_list_neg = best_matches_neg_dict[base_img_ind]
+        old_list_neg.remove(random_negative_image_index)
+        best_matches_neg_dict[base_img_ind] = old_list_neg
+
+        pair_images.append([image, random_negative_image])
+        pair_labels.append([0])
+
+        base_img_ind += 1
+
+    with open(f'{path}/saved_best_matches.pkl', 'wb') as f:
+        pickle.dump(best_matches_dict, f)
+
+    with open(f'{path}/saved_best_matches_neg.pkl', 'wb') as f:
+        pickle.dump(best_matches_neg_dict, f)
+
+    return np.asarray(pair_images), np.asarray(pair_labels)
+
 
 def euclidean_distance(vectors):
     from keras import backend as K

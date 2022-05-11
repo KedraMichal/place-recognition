@@ -32,22 +32,58 @@ def rmse(org_img: np.ndarray, pred_img: np.ndarray, max_p: int = 4095) -> float:
 
 
 
-# with open('similarity/saved_best_matches.pkl', 'rb') as f:
+# with open('similarity_40_pos_and_neg/saved_best_matches_neg.pkl', 'rb') as f:
 #     best_matches_dict = pickle.load(f)
-# print(best_matches_dict)
-
+# print(len(best_matches_dict[3]))
+# print(best_matches_dict[3])
 #Load data
-print("Loading data")
+# print("Loading data")
 (X_train, Y_train) = functions.read_data("data/DataSet_Nao_RAW/DataSet_SEQUENCE_1")
 (X_val, Y_val) = functions.read_data("data/DataSet_Nao_RAW/DataSet_SEQUENCE_2")
 print(f'Train data shape: {X_train.shape}')
-#functions.find_most_similar_pairs_from_class(X_train, Y_train)
+#
+folder_name = 'similarity_40_pos_and_neg'
+# # os.mkdir(f'{folder_name}')
+# # functions.find_most_similar_pairs_from_class(X_train, Y_train, folder_name, top_similar=40)
+#
+#
+# # FIRST model
+# print("Generating pairs")
+# (X_train_pairs, Y_train_pairs) = functions.generate_pairs_based_on_sim_pos_and_neg(X_train, Y_train, folder_name)
+# (X_val_pairs, Y_val_pairs) = functions.generate_pairs(X_val, Y_val)
+# print(f'Generated paris: {X_train_pairs.shape}')
+# print(f'Generated paris val: {X_val_pairs.shape}')
+#
+# # siamese network
+# imgA = Input(shape=(64, 64, 3))
+# imgB = Input(shape=(64, 64, 3))
+# featureExtractor = model.build_siamese_model()
+# featsA = featureExtractor(imgA)  # embedding a
+# featsB = featureExtractor(imgB)
+#
+# distance = Lambda(functions.euclidean_distance)([featsA, featsB])
+# outputs = Dense(1, activation="sigmoid")(distance)
+# model_1 = Model(inputs=[imgA, imgB], outputs=outputs)
+# model_1.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+#
+# # train
+# his = model_1.fit([X_train_pairs[:, 0], X_train_pairs[:, 1]], Y_train_pairs[:],
+#                   validation_data=([X_val_pairs[:, 0], X_val_pairs[:, 1]], Y_val_pairs[:]), batch_size=64, epochs=30)
+#
+#
+#
+# # save results
+# os.mkdir(f'{folder_name}/model1')
+# os.mkdir(f'{folder_name}/model1/plots')
+# model_1.save_weights(f'{folder_name}/model1/model')
+# functions.plot_learning_history_2(his, f'{folder_name}/model1')
 
-#functions.generate_pairs_based_on_sim(X_train, Y_train)
 
+
+# LOOP
 print("Generating pairs")
-for i in range(5, 30):
-    (X_train_pairs, Y_train_pairs) = functions.generate_pairs_based_on_sim(X_train, Y_train)
+for i in range(1, 40):
+    (X_train_pairs, Y_train_pairs) = functions.generate_pairs_based_on_sim_pos_and_neg(X_train, Y_train, folder_name)
     (X_val_pairs, Y_val_pairs) = functions.generate_pairs(X_val, Y_val)
     print(f'Generated paris: {X_train_pairs.shape}')
     print(f'Generated paris val: {X_val_pairs.shape}')
@@ -70,10 +106,10 @@ for i in range(5, 30):
                       validation_data=([X_val_pairs[:, 0], X_val_pairs[:, 1]], Y_val_pairs[:]), batch_size=64, epochs=30)
 
     # save results
-    os.mkdir(f'similarity/model{i+1}')
-    os.mkdir(f'similarity/model{i+1}/plots')
-    model_1.save_weights(f'similarity/model{i+1}/model')
-    functions.plot_learning_history_2(his, f'similarity/model{i+1}')
+    os.mkdir(f'{folder_name}/model{i+1}')
+    os.mkdir(f'{folder_name}/model{i+1}/plots')
+    model_1.save_weights(f'{folder_name}/model{i+1}/model')
+    functions.plot_learning_history_2(his, f'{folder_name}/model{i+1}')
 
 
 
