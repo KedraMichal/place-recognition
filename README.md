@@ -1,1 +1,1 @@
-# place-recognition
+Dataset available at: https://drive.google.com/drive/folders/1cKiRO5ipJ3FYErgbUAqLAFVNCLZ546do
